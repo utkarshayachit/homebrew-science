@@ -4,7 +4,7 @@ class Paraview < Formula
   homepage 'http://paraview.org'
   url "http://www.paraview.org/files/v4.2/ParaView-v4.2.0-source.tar.gz"
   version '4.2.0'
-  sha1 '77cf0e3804eb7bb91d2d94b10bd470f4'
+  sha1 'a440ba9912549bdd23a949e22add41696715dd32'
 
   head 'git://paraview.org/ParaView.git', :using => :git, :tag => 'master'
 
