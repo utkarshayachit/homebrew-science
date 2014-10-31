@@ -2,7 +2,7 @@ require 'formula'
 
 class Paraview < Formula
   homepage 'http://paraview.org'
-  url 'http://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v4.2&type=source&os=all&downloadFile=ParaView-v4.2.0-source.tar.gz'
+  url "http://www.paraview.org/files/v4.2/ParaView-v4.2.0-source.tar.gz"
   version '4.2.0'
   sha1 '77cf0e3804eb7bb91d2d94b10bd470f4'
 
