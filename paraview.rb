@@ -1,8 +1,9 @@
 class Paraview < Formula
+  desc "ParaView: an open-source data analysis and visualization application"
   homepage "http://paraview.org"
-  url "http://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v4.2&type=source&os=all&downloadFile=ParaView-v4.2.0-source.tar.gz"
-  sha256 "ac26cc5fe5ce82d27531727a01242353d40984826eaa580edea0791887a07b6b"
-  head "git://paraview.org/ParaView.git"
+  url "http://www.paraview.org/paraview-downloads/download.php?submit=Download&version=v5.0&type=source&os=all&downloadFile=ParaView-v5.0.0-source.tar.gz"
+  sha256 "b0ecfc8f590a696a4374752961abcf663acfc367ced8101ae4419cfbc6c60534"
+  head "https://gitlab.kitware.com/paraview/paraview.git"
 
   bottle do
     sha256 "f3c77c1007faebe1294e72f6e431b654916ccfaa632411080932e827e5efa2bf" => :yosemite
@@ -10,8 +11,9 @@ class Paraview < Formula
     sha256 "1a8b184f3cfa7adf51c1cb43a8cf5a6b7297cca7da3741afa0b2074e204a744a" => :mountain_lion
   end
 
-  depends_on "cmake" => :build
+  option "without-opengl2", "Use legacy OpenGL 1.1 rendering backend."
 
+  depends_on "cmake" => :build
   depends_on "boost" => :recommended
   depends_on "cgns" => :recommended
   depends_on "ffmpeg" => :recommended
@@ -25,10 +27,6 @@ class Paraview < Formula
   depends_on "libtiff"
   depends_on "fontconfig"
   depends_on "libpng"
-
-  # Temporary fix for a cast issue related to FreeType.
-  # See https://bugs.gentoo.org/show_bug.cgi?id=533444
-  patch :DATA
 
   def install
     args = std_cmake_args + %W[
@@ -44,6 +42,8 @@ class Paraview < Formula
       -DVTK_USE_SYSTEM_PNG:BOOL=ON
       -DVTK_USE_SYSTEM_TIFF:BOOL=ON
       -DVTK_USE_SYSTEM_ZLIB:BOOL=ON
+      -DVTK_LEGACY_REMOVE:BOOL=ON
+      -DPARAVIEW_BUILD_PLUGIN_CDIReader:BOOL=OFF
     ]
 
     args << "-DPARAVIEW_BUILD_QT_GUI:BOOL=OFF" if build.without? "qt"
@@ -51,6 +51,12 @@ class Paraview < Formula
     args << "-DPARAVIEW_ENABLE_FFMPEG:BOOL=ON" if build.with? "ffmpeg"
     args << "-DPARAVIEW_USE_VISITBRIDGE:BOOL=ON" if build.with? "boost"
     args << "-DVISIT_BUILD_READER_CGNS:BOOL=ON" if build.with? "cgns"
+
+    if build.without? "opengl2"
+      args << "-DVTK_RENDERING_BACKEND:STRING=OpenGL"
+    else
+      args << "-DVTK_RENDERING_BACKEND:STRING=OpenGL2"
+    end
 
     mkdir "build" do
       if build.with? "python"
@@ -72,29 +78,3 @@ class Paraview < Formula
     shell_output("#{prefix}/paraview.app/Contents/MacOS/paraview --version", 1)
   end
 end
-
-__END__
-diff --git a/VTK/Rendering/FreeType/vtkFreeTypeTools.cxx b/VTK/Rendering/FreeType/vtkFreeTypeTools.cxx
-index fcbb323..7a48f62 100644
---- a/VTK/Rendering/FreeType/vtkFreeTypeTools.cxx
-+++ b/VTK/Rendering/FreeType/vtkFreeTypeTools.cxx
-@@ -1183,7 +1183,7 @@ bool vtkFreeTypeTools::CalculateBoundingBox(const T& str,
-     if (bitmap)
-       {
-       metaData.ascent = std::max(bitmapGlyph->top - 1, metaData.ascent);
--      metaData.descent = std::min(-(bitmap->rows - (bitmapGlyph->top - 1)),
-+      metaData.descent = std::min(-(static_cast<int>(bitmap->rows) - (bitmapGlyph->top - 1)),
-                                   metaData.descent);
-       }
-     ++heightString;
-@@ -1950,8 +1950,8 @@ void vtkFreeTypeTools::GetLineMetrics(T begin, T end, MetaData &metaData,
-     if (bitmap)
-       {
-       bbox[0] = std::min(bbox[0], pen[0] + bitmapGlyph->left);
--      bbox[1] = std::max(bbox[1], pen[0] + bitmapGlyph->left + bitmap->width);
--      bbox[2] = std::min(bbox[2], pen[1] + bitmapGlyph->top - 1 - bitmap->rows);
-+      bbox[1] = std::max(bbox[1], pen[0] + bitmapGlyph->left + static_cast<int>(bitmap->width));
-+      bbox[2] = std::min(bbox[2], pen[1] + bitmapGlyph->top - 1 - static_cast<int>(bitmap->rows));
-       bbox[3] = std::max(bbox[3], pen[1] + bitmapGlyph->top - 1);
-       }
-     else
